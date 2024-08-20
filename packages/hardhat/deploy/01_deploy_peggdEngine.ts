@@ -1,6 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { Contract } from "ethers";
+import { hardhat, sepolia } from "viem/chains";
 
 /**
  * Deploys a contract named "YourContract" using the deployer account and
@@ -26,39 +27,50 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
 
   console.log("Deployer", deployer);
 
-  // Deploy weth contract
-  const erc20MockOwn = await deploy("ERC20MockOwn", {
-    from: deployer,
-    // Contract constructor arguments
-    args: ["wEth", "WETH", deployer, 1000e8],
-    log: true,
-    // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
-    // automatically mining the contract deployment transaction. There is no effect on live networks.
-    autoMine: true,
-  });
+  let tokenAddresses: string[] = [];
+  let priceFeedAddresses: string[] = [];
+  const actualChainId = await hre.getChainId();
 
-  const erc20MockOwnContract = await hre.ethers.getContract<Contract>("ERC20MockOwn", deployer);
-  console.log("ERC20MockOwn", erc20MockOwn.address);
+  if (hardhat.id === Number(actualChainId)) {
+    // Deploy weth contract
+    const erc20MockOwn = await deploy("ERC20MockOwn", {
+      from: deployer,
+      // Contract constructor arguments
+      args: ["wEth", "WETH", deployer, 1000e8],
+      log: true,
+      // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
+      // automatically mining the contract deployment transaction. There is no effect on live networks.
+      autoMine: true,
+    });
 
-  console.log("WETH minted", await erc20MockOwnContract.mint(deployer, 1));
-  /// Deploy price feed contract
-  const priceFeed = await deploy("MockV3Aggregator", {
-    from: deployer,
-    // Contract constructor arguments
-    args: [DECIMALS, ETH_USD_PRICE],
-    log: true,
-    // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
-    // automatically mining the contract deployment transaction. There is no effect on live networks.
-    autoMine: true,
-  });
-  // const priceFeed = await hre.ethers.getContract<Contract>("MockV3Aggregator", deployer);
-  // console.log("PriceFeed", priceFeed.address);
-  // console.log("WETH minted", await yourContract.mint(deployer, 1));
+    const erc20MockOwnContract = await hre.ethers.getContract<Contract>("ERC20MockOwn", deployer);
+    // console.log("ERC20MockOwn", erc20MockOwn.address);
+
+    console.log("WETH minted", await erc20MockOwnContract.mint(deployer, 1));
+    /// Deploy price feed contract
+    const priceFeed = await deploy("MockV3Aggregator", {
+      from: deployer,
+      // Contract constructor arguments
+      args: [DECIMALS, ETH_USD_PRICE],
+      log: true,
+      // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
+      // automatically mining the contract deployment transaction. There is no effect on live networks.
+      autoMine: true,
+    });
+    // const priceFeed = await hre.ethers.getContract<Contract>("MockV3Aggregator", deployer);
+    // console.log("PriceFeed", priceFeed.address);
+    tokenAddresses = [erc20MockOwn.address];
+    priceFeedAddresses = [priceFeed.address];
+  } else if (sepolia.id === Number(actualChainId)) {
+    tokenAddresses = ["0xdd13E55209Fd76AfE204dBda4007C227904f0a81"];
+    priceFeedAddresses = ["0x694AA1769357215DE4FAC081bf1f309aDC325306"];
+  }
+
   /// Deplpy engine contract with weth and price feed contract
-  const tokenAddresses = [erc20MockOwn.address];
-  const priceFeedAddresses = [priceFeed.address];
-  console.log("tokenAddresses", tokenAddresses);
-  console.log("priceFeedAddresses", priceFeedAddresses);
+  // const tokenAddresses = [erc20MockOwn.address];
+  // const priceFeedAddresses = [priceFeed.address];
+  // console.log("tokenAddresses", tokenAddresses);
+  // console.log("priceFeedAddresses", priceFeedAddresses);
   await deploy("AnchrEngine", {
     from: deployer,
     // Contract constructor arguments
@@ -68,8 +80,8 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
     // automatically mining the contract deployment transaction. There is no effect on live networks.
     autoMine: true,
   });
-  const anchrEngine = await hre.ethers.getContract<Contract>("AnchrEngine", deployer);
-  console.log("AnchrEngine", anchrEngine);
+  // const anchrEngine = await hre.ethers.getContract<Contract>("AnchrEngine", deployer);
+  // console.log("AnchrEngine", anchrEngine);
 
   // Deploy peggd contract and asign owner engine contract
   await deploy("PeggdStableCoin", {
@@ -81,8 +93,8 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
     // automatically mining the contract deployment transaction. There is no effect on live networks.
     autoMine: true,
   });
-  const peggdStableCoin = await hre.ethers.getContract<Contract>("PeggdStableCoin", deployer);
-  console.log("AnchrEngine", peggdStableCoin);
+  // const peggdStableCoin = await hre.ethers.getContract<Contract>("PeggdStableCoin", deployer);
+  // console.log("AnchrEngine", peggdStableCoin);
 
   // await deploy("AnchrEngine", {
   //   from: deployer,
