@@ -44,7 +44,7 @@ contract PeggdStableCoin is ERC20Burnable, Ownable {
     error PeggdStableCoin__BurnAmountExceedsBalance();
     error PeggdStableCoin__NotZeroAddress();
 
-    constructor() ERC20("FCBarcelonaCoin", "FBC") {}
+    constructor() ERC20("FCBarcelonaToken", "FBT") {}
 
     function burn(uint256 _amount) public override {
         uint256 balance = balanceOf(msg.sender);

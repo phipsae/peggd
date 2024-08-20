@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   31337: {
     AnchrEngine: {
-      address: "0x67d269191c92Caf3cD7723F116c85e6E9bf55933",
+      address: "0x4bf010f1b9beDA5450a8dD702ED602A104ff65EE",
       abi: [
         {
           inputs: [
@@ -125,6 +125,38 @@ const deployedContracts = {
           type: "event",
         },
         {
+          inputs: [],
+          name: "FOOTBALL_TOKEN_PRICE",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "user",
+              type: "address",
+            },
+          ],
+          name: "_healthFactor",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
           inputs: [
             {
               internalType: "address",
@@ -138,6 +170,81 @@ const deployedContracts = {
             },
           ],
           name: "depositCollateral",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "user",
+              type: "address",
+            },
+          ],
+          name: "getAccountCollateralValue",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "totalValueInUsd",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "user",
+              type: "address",
+            },
+          ],
+          name: "getAccountDebtValue",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "totalValueInUsd",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "token",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "amount",
+              type: "uint256",
+            },
+          ],
+          name: "getUsdValue",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "amountAscToMint",
+              type: "uint256",
+            },
+          ],
+          name: "mintAsc",
           outputs: [],
           stateMutability: "nonpayable",
           type: "function",
@@ -170,6 +277,25 @@ const deployedContracts = {
               internalType: "contract PeggdStableCoin",
               name: "",
               type: "address",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "user",
+              type: "address",
+            },
+          ],
+          name: "s_ascMinted",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "amountAscMinted",
+              type: "uint256",
             },
           ],
           stateMutability: "view",
@@ -235,24 +361,6 @@ const deployedContracts = {
             },
           ],
           stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "address",
-              name: "tokenCollateralAddress",
-              type: "address",
-            },
-            {
-              internalType: "uint256",
-              name: "amountCollateral",
-              type: "uint256",
-            },
-          ],
-          name: "setAllowance",
-          outputs: [],
-          stateMutability: "nonpayable",
           type: "function",
         },
         {
@@ -956,7 +1064,7 @@ const deployedContracts = {
       inheritedFunctions: {},
     },
     PeggdStableCoin: {
-      address: "0xE6E340D132b5f46d1e472DebcD681B2aBc16e57E",
+      address: "0x986aaa537b8cc170761FDAC6aC4fc7F9d8a20A8C",
       abi: [
         {
           inputs: [],
@@ -1357,19 +1465,30 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {
-        allowance: "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
-        approve: "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
-        balanceOf: "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
+        allowance:
+          "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
+        approve:
+          "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
+        balanceOf:
+          "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
         burn: "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
-        burnFrom: "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
-        decimals: "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
-        decreaseAllowance: "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
-        increaseAllowance: "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
+        burnFrom:
+          "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
+        decimals:
+          "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
+        decreaseAllowance:
+          "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
+        increaseAllowance:
+          "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
         name: "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
-        symbol: "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
-        totalSupply: "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
-        transfer: "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
-        transferFrom: "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
+        symbol:
+          "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
+        totalSupply:
+          "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
+        transfer:
+          "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
+        transferFrom:
+          "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
         owner: "@openzeppelin/contracts/access/Ownable.sol",
         renounceOwnership: "@openzeppelin/contracts/access/Ownable.sol",
         transferOwnership: "@openzeppelin/contracts/access/Ownable.sol",
