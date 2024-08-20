@@ -64,7 +64,7 @@ contract PeggdStableCoin is ERC20Burnable, Ownable {
         if (_amount <= 0) {
             revert PeggdStableCoin__MostBeMoreThanZero();
         }
-        _mint(msg.sender, _amount);
+        _mint(_to, _amount);
         return true;
     }
 }

@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { Contract } from "ethers";
+import { Contract, parseEther } from "ethers";
 import { hardhat, sepolia } from "viem/chains";
 
 /**
@@ -44,9 +44,8 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
     });
 
     const erc20MockOwnContract = await hre.ethers.getContract<Contract>("ERC20MockOwn", deployer);
-    // console.log("ERC20MockOwn", erc20MockOwn.address);
 
-    console.log("WETH minted", await erc20MockOwnContract.mint(deployer, 1));
+    console.log("WETH minted", await erc20MockOwnContract.mint(deployer, parseEther("100")));
     /// Deploy price feed contract
     const priceFeed = await deploy("MockV3Aggregator", {
       from: deployer,
@@ -71,7 +70,7 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
   // const priceFeedAddresses = [priceFeed.address];
   // console.log("tokenAddresses", tokenAddresses);
   // console.log("priceFeedAddresses", priceFeedAddresses);
-  await deploy("AnchrEngine", {
+  const anchrEngine = await deploy("AnchrEngine", {
     from: deployer,
     // Contract constructor arguments
     args: [tokenAddresses, priceFeedAddresses],
@@ -80,11 +79,21 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
     // automatically mining the contract deployment transaction. There is no effect on live networks.
     autoMine: true,
   });
-  // const anchrEngine = await hre.ethers.getContract<Contract>("AnchrEngine", deployer);
+  const anchrEngineContract = await hre.ethers.getContract<Contract>("AnchrEngine", deployer);
   // console.log("AnchrEngine", anchrEngine);
 
+  if (hardhat.id === Number(actualChainId)) {
+    const erc20MockOwnContract = await hre.ethers.getContract<Contract>("ERC20MockOwn", deployer);
+    console.log("set Weth allowance", await erc20MockOwnContract.approve(anchrEngine.address, parseEther("10")));
+    const erc20MockAddress = await erc20MockOwnContract.getAddress();
+    console.log(
+      "Deposit collateral to engine",
+      await anchrEngineContract.depositCollateral(erc20MockAddress, parseEther("1")),
+    );
+  }
+
   // Deploy peggd contract and asign owner engine contract
-  await deploy("PeggdStableCoin", {
+  const peggdStableCoin = await deploy("PeggdStableCoin", {
     from: deployer,
     // Contract constructor arguments
     args: [],
@@ -95,6 +104,8 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
   });
   // const peggdStableCoin = await hre.ethers.getContract<Contract>("PeggdStableCoin", deployer);
   // console.log("AnchrEngine", peggdStableCoin);
+  // console.log("Pegged Address", anchrEngine);
+  console.log("WETH minted", await anchrEngineContract.setAscContractAddress(peggdStableCoin.address));
 
   // await deploy("AnchrEngine", {
   //   from: deployer,

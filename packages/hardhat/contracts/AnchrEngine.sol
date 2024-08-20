@@ -41,10 +41,11 @@ contract AnchrEngine is Ownable {
     uint256 private constant LIQUIDATION_THRESHOLD = 50; // 200% overcollateralization
     uint256 private constant LIQUIDATAION_PRECISION = 100;
     uint256 private constant MIN_HEALTH_FACTOR = 1e18;
+    uint256 public constant FOOTBALL_TOKEN_PRICE = 94e16;
 
     mapping(address token => address priceFeed) public s_priceFeeds;
     mapping(address user => mapping(address token => uint256 amount)) public s_collateralDeposited;
-    mapping(address user => uint256 amountAscMinted) private s_ascMinted;
+    mapping(address user => uint256 amountAscMinted) public s_ascMinted;
 
     PeggdStableCoin public s_asc;
 
@@ -95,18 +96,12 @@ contract AnchrEngine is Ownable {
     /// External Functions ////
     ///////////////////////////
 
-    function setAscContractAddress(address _ascAddress) external onlyOwner {
+    /**
+     * @notice Set the address of the ASC contract
+     * @param _ascAddress The address of the ASC contract
+     */
+    function setAscContractAddress(address _ascAddress) public {
         s_asc = PeggdStableCoin(_ascAddress);
-    }
-
-    function setAllowance(address tokenCollateralAddress, uint256 amountCollateral) public {
-        console.log("MSG.SENDER", msg.sender);
-        console.log("Collateral Deposited address(this)", address(this));
-        address spender = address(this);
-        (bool successApprove) = IERC20(tokenCollateralAddress).approve(spender, amountCollateral);
-        if (!successApprove) {
-            revert ASCEngine__TransferFailed();
-        }
     }
 
     /**
@@ -121,87 +116,84 @@ contract AnchrEngine is Ownable {
     {
         s_collateralDeposited[msg.sender][tokenCollateralAddress] += amountCollateral;
         emit CollateralDeposited(msg.sender, tokenCollateralAddress, amountCollateral);
-        console.log("MSG.SENDER", msg.sender);
-        console.log("Collateral Deposited address(this)", address(this));
-        (bool successApprove) = IERC20(tokenCollateralAddress).approve(address(this), amountCollateral);
-        if (!successApprove) {
+
+        (bool success) = IERC20(tokenCollateralAddress).transferFrom(msg.sender, address(this), amountCollateral);
+
+        if (!success) {
             revert ASCEngine__TransferFailed();
         }
-        // (bool success) = IERC20(tokenCollateralAddress).transferFrom(
-        //   msg.sender, address(this), amountCollateral
-        // );
-
-        // if (!success) {
-        //   revert ASCEngine__TransferFailed();
-        // }
     }
 
-    // /**
-    //  * @notice Mint ASC
-    //  * @param amountAscToMint The amount of ASC to mint
-    //  * @notice tehy must have more collateral value than the minimum threshold
-    //  */
-    // function mintAsc(uint256 amountAscToMint) public moreThanZero(amountAscToMint) {
-    //     s_ascMinted[msg.sender] += amountAscToMint;
-    //     _revertIfHealthFactorIsBroken(msg.sender);
-    //     bool minted = s_asc.mint(msg.sender, amountAscToMint);
-    //     if (!minted) {
-    //         revert ASCEngine__MintFailed();
-    //     }
-    // }
+    /**
+     * @notice Mint ASC
+     * @param amountAscToMint The amount of ASC to mint
+     * @notice tehy must have more collateral value than the minimum threshold
+     */
+    function mintAsc(uint256 amountAscToMint) public moreThanZero(amountAscToMint) {
+        s_ascMinted[msg.sender] += amountAscToMint;
+        _revertIfHealthFactorIsBroken(msg.sender);
+        bool minted = s_asc.mint(msg.sender, amountAscToMint);
+        if (!minted) {
+            revert ASCEngine__MintFailed();
+        }
+    }
 
     // /////////////////////////////////////
     // /// Private & Internal Functions ////
     // /////////////////////////////////////
 
-    // function _getAccountInformation(address user)
-    //     private
-    //     view
-    //     returns (uint256 totalAscMinted, uint256 collateralValueInUsd)
-    // {
-    //     totalAscMinted = s_ascMinted[user];
-    //     collateralValueInUsd = getAccountCollateralValue(user);
-    // }
+    function _getAccountInformation(address user)
+        private
+        view
+        returns (uint256 debtValueInUsd, uint256 collateralValueInUsd)
+    {
+        debtValueInUsd = getAccountDebtValue(user);
+        collateralValueInUsd = getAccountCollateralValue(user);
+    }
 
-    // function _healthFactor(address user) internal view returns (uint256) {
-    //     // total asc mined
-    //     // total collateral VALUE
-    //     (uint256 totalAscMinted, uint256 collateralValueInUsd) = _getAccountInformation(user);
-    //     uint256 collateralAdjustedForThreshold = (collateralValueInUsd * LIQUIDATION_THRESHOLD) / LIQUIDATAION_PRECISION;
-    //     return collateralAdjustedForThreshold / totalAscMinted;
-    // }
+    function _healthFactor(address user) public view returns (uint256) {
+        // total asc mined
+        // total collateral VALUE
+        (uint256 debtValueInUsd, uint256 collateralValueInUsd) = _getAccountInformation(user);
+        uint256 collateralAdjustedForThreshold = (collateralValueInUsd * LIQUIDATION_THRESHOLD) / LIQUIDATAION_PRECISION;
+        return (collateralAdjustedForThreshold * PRECISION) / debtValueInUsd;
+    }
 
-    // function _revertIfHealthFactorIsBroken(address user) internal view {
-    //     // 1. check Health Factor
-    //     uint256 userHealthFactor = _healthFactor(user);
-    //     if (userHealthFactor < MIN_HEALTH_FACTOR) {
-    //         revert ASCEngine__HealthFactorBelowMinimum();
-    //     }
-    //     // 2. revert if not
-    // }
+    function _revertIfHealthFactorIsBroken(address user) internal view {
+        // 1. check Health Factor
+        uint256 userHealthFactor = _healthFactor(user);
+        if (userHealthFactor < MIN_HEALTH_FACTOR) {
+            revert ASCEngine__HealthFactorBelowMinimum();
+        }
+        // 2. revert if not
+    }
 
     // //////////////////////////////////////////
     // /// Private & External View Functions ////
     // //////////////////////////////////////////
-    // function getAccountCollateralValue(address user) public view returns (uint256 totalValueInUsd) {
-    //     // loop through each collateral token, get the amount they have deposited and map it to the prioce to get the value
-    //     for (uint256 i = 0; i < s_collateralTokens.length; i++) {
-    //         address token = s_collateralTokens[i];
-    //         uint256 amount = s_collateralDeposited[user][token];
-    //         uint256 value = getUsdValue(token, amount);
-    //         totalValueInUsd += value;
-    //     }
-    //     return totalValueInUsd;
-    // }
+    function getAccountCollateralValue(address user) public view returns (uint256 totalValueInUsd) {
+        // loop through each collateral token, get the amount they have deposited and map it to the prioce to get the value
+        for (uint256 i = 0; i < s_collateralTokens.length; i++) {
+            address token = s_collateralTokens[i];
+            uint256 amount = s_collateralDeposited[user][token];
+            uint256 value = getUsdValue(token, amount);
+            totalValueInUsd += value;
+        }
+        return totalValueInUsd;
+    }
 
-    // function getUsdValue(address token, uint256 amount) public view returns (uint256) {
-    //     // get the price feed for the token
-    //     // get the price of the token
-    //     // return the price * amount
-    //     AggregatorV3Interface priceFeed = AggregatorV3Interface(s_priceFeeds[token]);
-    //     (, int256 price,,,) = priceFeed.latestRoundData();
+    function getAccountDebtValue(address user) public view returns (uint256 totalValueInUsd) {
+        return (s_ascMinted[user] * FOOTBALL_TOKEN_PRICE) / PRECISION;
+    }
 
-    //     // (1000 * 1e8) * 1e8 * 1000 * 1e18
-    //     return (uint256(price) * ADDITIONAL_FEED_PRECISION * amount) / PRECISION;
-    // }
+    function getUsdValue(address token, uint256 amount) public view returns (uint256) {
+        // get the price feed for the token
+        // get the price of the token
+        // return the price * amount
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(s_priceFeeds[token]);
+        (, int256 price,,,) = priceFeed.latestRoundData();
+
+        // (1000 * 1e8) * 1e8 * 1000 * 1e18
+        return (uint256(price) * ADDITIONAL_FEED_PRECISION * amount) / PRECISION;
+    }
 }
