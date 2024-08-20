@@ -251,65 +251,90 @@ const Home: NextPage = () => {
           <div className="box-border p-4 border-2">
             <div>
               <div className="mb-4">
-                <span className="block text-1xl font-bold mb-5"> 🧰 Manage token</span>
+                <span className="block text-1xl font-bold mb-5 text-center"> 🧰 Manage token</span>
               </div>
             </div>
-            <div>1. Approve WETh and deposit as Collateral</div>
-            <ERC20Input amount={amountWeth} setAmount={setAmountWeth} />
-            {anchrEngine && (
-              <button
-                className="btn btn-primary"
-                onClick={() =>
-                  writeContract({
-                    abi: erc20Abi,
-                    address: collateralAddress || "",
-                    functionName: "approve",
-                    args: [anchrEngine.address, parseEther(amountWeth)],
-                  })
-                }
-              >
-                Approve
-              </button>
-            )}
-            <button
-              className="btn btn-primary"
-              onClick={async () => {
-                try {
-                  await writeYourContractAsyncEngine({
-                    functionName: "depositCollateral",
-                    args: [collateralAddress, parseEther(amountWeth)],
-                  });
-                } catch (e) {
-                  console.error("Error setting greeting:", e);
-                }
-              }}
-            >
-              Deposit WETH
-            </button>
-            <div>3. Mint FBT</div>
-            <ERC20Input amount={amountFBT} setAmount={setAmountFBT} />
-            <button
-              className="btn btn-primary"
-              onClick={async () => {
-                try {
-                  await writeYourContractAsyncEngine({
-                    functionName: "mintAsc",
-                    args: [parseEther(String(Number(amountFBT) / 1000))],
-                  });
-                } catch (e) {
-                  console.error("Error setting greeting:", e);
-                }
-              }}
-            >
-              Mint FBT
-            </button>
-            New Healthfactor:
-            <HealthFactor
-              initialAmountEth={Number(collateralDeposited) || Number(0)}
-              newAmountEth={Number(amountWeth)}
-              initialAmountFbt={Number(fbtMinted)}
-              newAmountFbt={Number(amountFBT)}
-            />
+            <div>
+              <div>💰 Deposit Collateral</div>
+              <div className="flex flex-row gap-5 mt-3">
+                <ERC20Input amount={amountWeth} setAmount={setAmountWeth} placeholder="Add WETH" />
+                {anchrEngine && (
+                  <button
+                    className="btn btn-primary"
+                    onClick={() =>
+                      writeContract({
+                        abi: erc20Abi,
+                        address: collateralAddress || "",
+                        functionName: "approve",
+                        args: [anchrEngine.address, parseEther(amountWeth)],
+                      })
+                    }
+                  >
+                    Approve WETH
+                  </button>
+                )}
+                <button
+                  className="btn btn-primary"
+                  onClick={async () => {
+                    try {
+                      await writeYourContractAsyncEngine({
+                        functionName: "depositCollateral",
+                        args: [collateralAddress, parseEther(amountWeth)],
+                      });
+                    } catch (e) {
+                      console.error("Error setting greeting:", e);
+                    }
+                  }}
+                >
+                  Deposit WETH
+                </button>
+              </div>
+            </div>
+            <div className="mt-3">
+              <div>🌱 Mint FBT</div>
+              <div className="flex flex-row gap-5 mt-3">
+                <ERC20Input amount={amountFBT} setAmount={setAmountFBT} placeholder="Add FBT" />
+                <button
+                  className="btn btn-primary"
+                  onClick={async () => {
+                    try {
+                      await writeYourContractAsyncEngine({
+                        functionName: "mintAsc",
+                        args: [parseEther(String(Number(amountFBT) / 1000))],
+                      });
+                    } catch (e) {
+                      console.error("Error setting greeting:", e);
+                    }
+                  }}
+                >
+                  Mint FBT
+                </button>
+              </div>
+            </div>
+            <div className="mt-3">
+              <div>🫳 Reedeem FBT (is coming soon)</div>
+              <div className="flex flex-row gap-5 mt-3">
+                <ERC20Input amount={""} setAmount={() => console.log()} placeholder="Return FBT" disabled />
+                <button
+                  className="btn btn-primary"
+                  disabled={true}
+                  onClick={() => {
+                    console.log("Redeem FBT");
+                  }}
+                >
+                  Reedem FBT
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-row">
+              <div>🏥 HealthFactor: </div>
+              <HealthFactor
+                initialAmountEth={Number(collateralDeposited) || Number(0)}
+                newAmountEth={Number(amountWeth)}
+                initialAmountFbt={Number(fbtMinted)}
+                newAmountFbt={Number(amountFBT)}
+              />
+            </div>
           </div>
         </div>
         <button
