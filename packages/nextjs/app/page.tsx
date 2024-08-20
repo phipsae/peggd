@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import {
   CategoryScale,
   Chart,
@@ -18,6 +19,7 @@ import { erc20Abi } from "viem";
 import { useWriteContract } from "wagmi";
 import { useAccount } from "wagmi";
 import { ERC20Input } from "~~/components/peggd/ERC20Input";
+import { HealthFactor } from "~~/components/peggd/HealthFactor";
 // import { BugAntIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Balance } from "~~/components/scaffold-eth";
 import { useScaffoldContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
@@ -58,18 +60,14 @@ function calculateNewHealthFactor(
   _initialAmountFbt: number,
   _newAmountFbt: number,
 ) {
-  const initialAmountEth = BigInt(_initialAmountEth);
-  const newAmountEth = BigInt(_newAmountEth);
-  const initialAmountFbt = BigInt(_initialAmountFbt);
-  const newAmountFbt = BigInt(_newAmountFbt);
-
-  const initialCollateralValue = initialAmountEth;
-  const newCollateralValue = newAmountEth;
-  const initialDebtValue = initialAmountFbt;
-  const newDebtValue = newAmountFbt;
-
+  console.log(_initialAmountEth, _newAmountEth, _initialAmountFbt, _newAmountFbt);
   const healthFactor =
-    ((initialCollateralValue + newCollateralValue) * BigInt(0.5)) / (initialDebtValue + newDebtValue);
+    Math.floor(
+      (((_initialAmountEth + _newAmountEth * 1e18) * 5 * 2000) /
+        ((_initialAmountFbt + _newAmountFbt * 1e15) * 10 * 0.94) /
+        1000) *
+        100,
+    ) / 100;
 
   return healthFactor;
 }
@@ -172,34 +170,54 @@ const Home: NextPage = () => {
   return (
     <>
       <div className="flex items-center flex-col flex-grow pt-10">
+        <div className="grid grid-cols-2 grid-rows-2 gap-4 w-full max-w-screen-lg">
+          <div className="box-border p-4 border-2"> 1. Box</div>
+          <div className="box-border p-4 border-2"> 2. Box</div>
+          <div className="box-border p-4 border-2"> 3. Box</div>
+          <div className="box-border p-4 border-2"> 4. Box</div>
+        </div>
         <div className="px-5">
           <h1 className="text-center">
-            <span className="block text-2xl mb-2">Welcome to</span>
-            <span className="block text-4xl font-bold">peggd</span>
+            <span className="block text-2xl mb-2">Manage your</span>
+            <div className="flex flex-row">
+              <Image
+                src="/Fc_barcelona.svg.png"
+                alt="fc barcelona logo"
+                className="cursor-pointer w-30 h-30 mr-2"
+                width={40}
+                height={30}
+              />
+              <span className="block text-4xl font-bold"> FC Barcelona Token</span>
+            </div>
           </h1>
           <canvas id="myChart" width="400" height="200"></canvas>
         </div>
-        <Balance address={connectedAddress} />
-        {collateralAddress}
-        <button
-          type="button"
-          onClick={() => {
-            console.log(collateralDeposited);
-          }}
-        >
-          Click Me
-        </button>
         Collateraization Factor: 50% of ETH (still hardcoded)
         <div>Collateral Deposited: ETH {formatUnits(BigInt(collateralDeposited || 0), 18).slice(0, 6)}</div>
         <div>Token Minted: USD {formatUnits(BigInt(accountCollateralValue || 0), 18).slice(0, 6)}</div>
         <div>Token Minted: FBT {formatUnits(BigInt(fbtMinted || 0), 15).slice(0, 6)}</div>
         <div>Token Minted: USD {formatUnits(BigInt(accountDebtValue || 0), 15).slice(0, 6)}</div>
-        <div>HealthFactor {formatUnits(BigInt(healthFactor || 0), 21).slice(0, 4)}</div>
+        <div>
+          HealthFactor:
+          <HealthFactor
+            initialAmountEth={Number(collateralDeposited) || Number(0)}
+            newAmountEth={0}
+            initialAmountFbt={Number(fbtMinted)}
+            newAmountFbt={0}
+          />
+        </div>
         <button
           type="button"
           className="btn btn-error"
           onClick={() => {
-            console.log(amount);
+            console.log(
+              calculateNewHealthFactor(
+                Number(collateralDeposited) || Number(0),
+                Number(amountWeth),
+                Number(fbtMinted),
+                Number(amountFBT),
+              ),
+            );
           }}
         >
           Click Me
@@ -235,7 +253,13 @@ const Home: NextPage = () => {
         >
           Deposit WETH
         </button>
-        <div>Show new health factor when entering in input field</div>
+        <div>New Healthfactor:</div>
+        <HealthFactor
+          initialAmountEth={Number(collateralDeposited) || Number(0)}
+          newAmountEth={Number(amountWeth)}
+          initialAmountFbt={Number(fbtMinted)}
+          newAmountFbt={0}
+        />
         <div>3. Mint FBT</div>
         <ERC20Input amount={amountFBT} setAmount={setAmountFBT} />
         <button
@@ -253,6 +277,13 @@ const Home: NextPage = () => {
         >
           Mint FBT
         </button>
+        New Healthfactor:
+        <HealthFactor
+          initialAmountEth={Number(collateralDeposited) || Number(0)}
+          newAmountEth={Number(0)}
+          initialAmountFbt={Number(fbtMinted)}
+          newAmountFbt={Number(amountFBT)}
+        />
       </div>
     </>
   );
