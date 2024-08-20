@@ -170,16 +170,10 @@ const Home: NextPage = () => {
   return (
     <>
       <div className="flex items-center flex-col flex-grow pt-10">
-        <div className="grid grid-cols-2 grid-rows-2 gap-4 w-full max-w-screen-lg">
-          <div className="box-border p-4 border-2"> 1. Box</div>
-          <div className="box-border p-4 border-2"> 2. Box</div>
-          <div className="box-border p-4 border-2"> 3. Box</div>
-          <div className="box-border p-4 border-2"> 4. Box</div>
-        </div>
         <div className="px-5">
           <h1 className="text-center">
             <span className="block text-2xl mb-2">Manage your</span>
-            <div className="flex flex-row">
+            <div className="flex flex-row mb-10">
               <Image
                 src="/Fc_barcelona.svg.png"
                 alt="fc barcelona logo"
@@ -190,21 +184,133 @@ const Home: NextPage = () => {
               <span className="block text-4xl font-bold"> FC Barcelona Token</span>
             </div>
           </h1>
-          <canvas id="myChart" width="400" height="200"></canvas>
         </div>
-        Collateraization Factor: 50% of ETH (still hardcoded)
-        <div>Collateral Deposited: ETH {formatUnits(BigInt(collateralDeposited || 0), 18).slice(0, 6)}</div>
-        <div>Token Minted: USD {formatUnits(BigInt(accountCollateralValue || 0), 18).slice(0, 6)}</div>
-        <div>Token Minted: FBT {formatUnits(BigInt(fbtMinted || 0), 15).slice(0, 6)}</div>
-        <div>Token Minted: USD {formatUnits(BigInt(accountDebtValue || 0), 15).slice(0, 6)}</div>
-        <div>
-          HealthFactor:
-          <HealthFactor
-            initialAmountEth={Number(collateralDeposited) || Number(0)}
-            newAmountEth={0}
-            initialAmountFbt={Number(fbtMinted)}
-            newAmountFbt={0}
-          />
+        <div className="grid grid-cols-2 grid-rows-2 gap-4 w-full max-w-screen-lg">
+          <div className="box-border p-4 border-2">
+            <div className="flex flex-row justify-center mb-5">
+              <Image
+                src="/Fc_barcelona.svg.png"
+                alt="fc barcelona logo"
+                className="cursor-pointer w-30 h-30 mr-2"
+                width={30}
+                height={20}
+              />
+              <span className="block text-1xl font-bold"> FC Barcelona market value trend (last year)</span>
+            </div>
+
+            <canvas id="myChart" width="400" height="200"></canvas>
+          </div>
+          <div className="box-border p-4 border-2 flex flex-col justify-between h-full items-center">
+            <div className="flex flex-col justify-center flex-grow">
+              <div className="mb-4">
+                <span className="block text-1xl font-bold mb-5"> ⚙️ Token Metrics</span>
+              </div>
+              <div className="mb-3">💵 Token price FBT* : $0.94</div>
+              <div className="mb-3">∑ Total minted: {Number(fbtMinted) / 1e15 + 100000}</div>
+              <div className="mb-3">💰 Total value FBT: {Math.floor((Number(fbtMinted) / 1e15 + 100000) * 0.94)} </div>
+              <div className="mb-3">
+                📈 Increase: <span style={{ color: "green" }}>13%</span> (last year)
+              </div>
+              <div>
+                📈 Increase: <span style={{ color: "green" }}>8%</span> (last 3 months)
+              </div>
+            </div>
+            <div className="mt-auto pt-5 text-sm">
+              * FBT price is the market value of the whole Barcelone team from markettransfer.com diveded by one billion
+            </div>
+          </div>
+
+          <div className="box-border p-4 border-2 flex flex-col justify-between h-full items-center">
+            <div>
+              <div className="mb-4">
+                <span className="block text-1xl font-bold mb-5"> 📊 Statistics Overview</span>
+              </div>
+              <div className="mb-3">⚖️ ETH Collaterization Factor: 50% </div>
+              <div className="mb-3">🛡️ Overcollatization rate: 200% </div>
+              <div className="mb-3">
+                📥 Collateral Deposited: ETH {formatUnits(BigInt(collateralDeposited || 0), 18).slice(0, 6)}
+              </div>
+              <div className="mb-3">
+                💵 Total Value Collateral {formatUnits(BigInt(accountCollateralValue || 0), 18).slice(0, 6)}$
+              </div>
+              <div className="mb-3">🏭 Token Minted: FBT {formatUnits(BigInt(fbtMinted || 0), 15).slice(0, 6)}</div>
+              <div className="mb-3">
+                💵 Token Minted Value: {formatUnits(BigInt(accountDebtValue || 0), 15).slice(0, 6)}$
+              </div>
+              <div className="flex flex-row">
+                <div>🏥 HealthFactor: </div>
+                <HealthFactor
+                  initialAmountEth={Number(collateralDeposited) || Number(0)}
+                  newAmountEth={0}
+                  initialAmountFbt={Number(fbtMinted)}
+                  newAmountFbt={0}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="box-border p-4 border-2">
+            <div>
+              <div className="mb-4">
+                <span className="block text-1xl font-bold mb-5"> 🧰 Manage token</span>
+              </div>
+            </div>
+            <div>1. Approve WETh and deposit as Collateral</div>
+            <ERC20Input amount={amountWeth} setAmount={setAmountWeth} />
+            {anchrEngine && (
+              <button
+                className="btn btn-primary"
+                onClick={() =>
+                  writeContract({
+                    abi: erc20Abi,
+                    address: collateralAddress || "",
+                    functionName: "approve",
+                    args: [anchrEngine.address, parseEther(amountWeth)],
+                  })
+                }
+              >
+                Approve
+              </button>
+            )}
+            <button
+              className="btn btn-primary"
+              onClick={async () => {
+                try {
+                  await writeYourContractAsyncEngine({
+                    functionName: "depositCollateral",
+                    args: [collateralAddress, parseEther(amountWeth)],
+                  });
+                } catch (e) {
+                  console.error("Error setting greeting:", e);
+                }
+              }}
+            >
+              Deposit WETH
+            </button>
+            <div>3. Mint FBT</div>
+            <ERC20Input amount={amountFBT} setAmount={setAmountFBT} />
+            <button
+              className="btn btn-primary"
+              onClick={async () => {
+                try {
+                  await writeYourContractAsyncEngine({
+                    functionName: "mintAsc",
+                    args: [parseEther(String(Number(amountFBT) / 1000))],
+                  });
+                } catch (e) {
+                  console.error("Error setting greeting:", e);
+                }
+              }}
+            >
+              Mint FBT
+            </button>
+            New Healthfactor:
+            <HealthFactor
+              initialAmountEth={Number(collateralDeposited) || Number(0)}
+              newAmountEth={Number(amountWeth)}
+              initialAmountFbt={Number(fbtMinted)}
+              newAmountFbt={Number(amountFBT)}
+            />
+          </div>
         </div>
         <button
           type="button"
@@ -222,68 +328,6 @@ const Home: NextPage = () => {
         >
           Click Me
         </button>
-        <div className="w-3/4 mb-3"></div>
-        <div>1. Approve WETh and deposit as Collateral</div>
-        <ERC20Input amount={amountWeth} setAmount={setAmountWeth} />
-        <button
-          className="btn btn-primary"
-          onClick={() =>
-            writeContract({
-              abi: erc20Abi,
-              address: collateralAddress || "",
-              functionName: "approve",
-              args: [anchrEngine.address, parseEther(amountWeth)],
-            })
-          }
-        >
-          Approve
-        </button>
-        <button
-          className="btn btn-primary"
-          onClick={async () => {
-            try {
-              await writeYourContractAsyncEngine({
-                functionName: "depositCollateral",
-                args: [collateralAddress, parseEther(amountWeth)],
-              });
-            } catch (e) {
-              console.error("Error setting greeting:", e);
-            }
-          }}
-        >
-          Deposit WETH
-        </button>
-        <div>New Healthfactor:</div>
-        <HealthFactor
-          initialAmountEth={Number(collateralDeposited) || Number(0)}
-          newAmountEth={Number(amountWeth)}
-          initialAmountFbt={Number(fbtMinted)}
-          newAmountFbt={0}
-        />
-        <div>3. Mint FBT</div>
-        <ERC20Input amount={amountFBT} setAmount={setAmountFBT} />
-        <button
-          className="btn btn-primary"
-          onClick={async () => {
-            try {
-              await writeYourContractAsyncEngine({
-                functionName: "mintAsc",
-                args: [parseEther(String(Number(amountFBT) / 1000))],
-              });
-            } catch (e) {
-              console.error("Error setting greeting:", e);
-            }
-          }}
-        >
-          Mint FBT
-        </button>
-        New Healthfactor:
-        <HealthFactor
-          initialAmountEth={Number(collateralDeposited) || Number(0)}
-          newAmountEth={Number(0)}
-          initialAmountFbt={Number(fbtMinted)}
-          newAmountFbt={Number(amountFBT)}
-        />
       </div>
     </>
   );
