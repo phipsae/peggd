@@ -21,7 +21,6 @@ import { useAccount } from "wagmi";
 import { ERC20Input } from "~~/components/peggd/ERC20Input";
 import { HealthFactor } from "~~/components/peggd/HealthFactor";
 // import { BugAntIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { Balance } from "~~/components/scaffold-eth";
 import { useScaffoldContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth/useScaffoldReadContract";
 
@@ -88,6 +87,7 @@ const Home: NextPage = () => {
       }
 
       // Create new chart instance and store it in ref
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       chartRef.current = new Chart(ctx.getContext("2d")!, {
         type: "line",
         data: stockData,
@@ -146,11 +146,11 @@ const Home: NextPage = () => {
     args: [connectedAddress],
   });
 
-  const { data: healthFactor } = useScaffoldReadContract({
-    contractName: "AnchrEngine",
-    functionName: "_healthFactor",
-    args: [connectedAddress],
-  });
+  // const { data: healthFactor } = useScaffoldReadContract({
+  //   contractName: "AnchrEngine",
+  //   functionName: "_healthFactor",
+  //   args: [connectedAddress],
+  // });
 
   const { data: accountDebtValue } = useScaffoldReadContract({
     contractName: "AnchrEngine",
